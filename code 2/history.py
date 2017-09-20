@@ -10,7 +10,7 @@ class AgentHistory:
 
     history.downloads: [[Download objects for round]]  (one sublist for each round)
          All the downloads _to_ this agent.
-        
+
     history.uploads: [[Upload objects for round]]  (one sublist for each round)
          All the downloads _from_ this agent.
 
@@ -44,7 +44,7 @@ class History:
                    dict : peer_id -> [[uploads] -- one list per round]
         downloads:
                    dict : peer_id -> [[downloads] -- one list per round]
-                   
+
         Keep track of the uploads _from_ and downloads _to_ the
         specified peer id.
         """
@@ -101,4 +101,3 @@ downloads=%s
 )""" % (
     pprint.pformat(self.uploads),
     pprint.pformat(self.downloads))
-

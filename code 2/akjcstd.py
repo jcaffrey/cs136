@@ -1,10 +1,17 @@
 #!/usr/bin/python
 
-# This is a dummy peer that just illustrates the available information your peers 
+# This is a dummy peer that just illustrates the available information your peers
 # have available.
 
 # You'll want to copy this file to AgentNameXXX.py for various versions of XXX,
 # probably get rid of the silly logging messages, and then add more logic.
+
+# TODO:
+# 1 (uploads) :
+    # - implement reciprocation
+        ## -- figure out which peers have uploaded to me the most
+    # - optimistic unchoking - every 3rd round, unchoke a random peer
+# 2 (requests)
 
 import random
 import logging
@@ -18,9 +25,11 @@ class akjcstd(Peer):
         print "post_init(): %s here!" % self.id
         self.dummy_state = dict()
         self.dummy_state["cake"] = "lie"
-    
+
     def requests(self, peers, history):
         """
+        ** must ask for pieces the peer has **
+
         peers: available info about the peers (who has what pieces)
         history: what's happened so far as far as this peer can see
 
@@ -47,10 +56,9 @@ class akjcstd(Peer):
         requests = []   # We'll put all the things we want here
         # Symmetry breaking is good...
         random.shuffle(needed_pieces)
-        
-        # Sort peers by id.  This is probably not a useful sort, but other 
-        # sorts might be useful
-        peers.sort(key=lambda p: p.id)
+
+        # not sure this helps vvv
+        peers.sort(key=lambda p: len(p.available_pieces))
         # request all available pieces from all peers!
         # (up to self.max_requests from each)
         for peer in peers:
@@ -72,6 +80,9 @@ class akjcstd(Peer):
 
     def uploads(self, requests, peers, history):
         """
+        ** must add up to no more than the peer's bandwidth cap **
+
+
         requests -- a list of the requests for this peer for this round
         peers -- available info about all the peers
         history -- history for all previous rounds
@@ -80,31 +91,68 @@ class akjcstd(Peer):
 
         In each round, this will be called after requests().
         """
+        #todo: check we don't upload more than self.up_bw?
 
-        round = history.current_round()
+
+        rnd = history.current_round()
         logging.debug("%s again.  It's round %d." % (
-            self.id, round))
+            self.id, rnd))
         # One could look at other stuff in the history too here.
         # For example, history.downloads[round-1] (if round != 0, of course)
         # has a list of Download objects for each Download to this peer in
         # the previous round.
+        bws = []
+
+
+        # get requester ids
+        # rid = lambda i: i.requester_id is type(String)
+        # rids = list(filter(rid, requests))
+        rids = list(map(lambda i: i.requester_id, requests))
+        logging.debug('RIDS %s' % (rids))
 
         if len(requests) == 0:
             logging.debug("No one wants my pieces!")
             chosen = []
             bws = []
         else:
-            logging.debug("Still here: uploading to a random peer")
+            chosen = []
+
+            # reciprocation
+            # definitely upload to those who we have recently downloaded from
+            best_friend = 0
+            for d in history.downloads[rnd - 1]:
+                if d.to_id == self.id and d.from_id in rids:
+                    if d.blocks > best_friend:
+                        chosen.insert(0, d.from_id)
+                        best_friend = d.blocks
+                    else:
+                        chosen.append(d.from_id)
+                    logging.debug('ID %s was nice by sending %s to %s (me)' % (d.from_id, d.blocks, self.id))
+
+            # optimistic unchoking
+            if rnd % 3 == 0:
+                request = random.choice(requests)
+                chosen.insert(0, request.requester_id)
+                # todo: ? add something to internal state to remember who we
+                # optimisticly unchoked so we can stop uploading to them after 3 rounds?
+                logging.debug("Still here: uploading to a random peer")
+
+            # Evenly "split" my upload bandwidth among the one chosen requester
+            # only call this when chosen isn't empty?
+            if len(chosen) != 0:
+                logging.debug('%s chosen ones!' % (len(chosen)))
+                bws = even_split(self.up_bw, len(chosen))
+            else:
+                return {}
+
             # change my internal state for no reason
             self.dummy_state["cake"] = "pie"
 
-            request = random.choice(requests)
-            chosen = [request.requester_id]
-            # Evenly "split" my upload bandwidth among the one chosen requester
-            bws = even_split(self.up_bw, len(chosen))
+        #todo: decide how many requests to actually fill
+            #(i.e. how many slots each peer should have - maybe some function of self.up_bw)
 
         # create actual uploads out of the list of peer ids and bandwidths
         uploads = [Upload(self.id, peer_id, bw)
                    for (peer_id, bw) in zip(chosen, bws)]
-            
+
         return uploads
