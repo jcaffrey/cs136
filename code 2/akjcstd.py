@@ -118,7 +118,7 @@ class akjcstd(Peer):
             chosen = []
 
             # reciprocation
-            # definitely upload to those who we have recently downloaded from
+            # definitely upload to those who we have recently downloaded from - use similar logic for PropShare client also
             best_friend = 0
             for d in history.downloads[rnd - 1]:
                 if d.to_id == self.id and d.from_id in rids:
