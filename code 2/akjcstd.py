@@ -57,8 +57,8 @@ class akjcstd(Peer):
         # Symmetry breaking is good...
         random.shuffle(needed_pieces)
 
-        # not sure this helps vvv
-        peers.sort(key=lambda p: len(p.available_pieces))
+        # not sure this helps
+        peers.sort(key=lambda p: p.id)
         # request all available pieces from all peers!
         # (up to self.max_requests from each)
         for peer in peers:
@@ -95,6 +95,7 @@ class akjcstd(Peer):
 
 
         rnd = history.current_round()
+        res = []
         logging.debug("%s again.  It's round %d." % (
             self.id, rnd))
         # One could look at other stuff in the history too here.
@@ -105,43 +106,67 @@ class akjcstd(Peer):
 
 
         # get requester ids
-        # rid = lambda i: i.requester_id is type(String)
-        # rids = list(filter(rid, requests))
-        rids = list(map(lambda i: i.requester_id, requests))
-        logging.debug('RIDS %s' % (rids))
+        rids_set = set(map(lambda i: i.requester_id, requests))
+        chosen_list_ids = []
+        logging.debug('RIDS %s' % (rids_set))
 
         if len(requests) == 0:
             logging.debug("No one wants my pieces!")
             chosen = []
             bws = []
         else:
-            chosen = []
-
+            CUTOFF = 4
             # reciprocation
             # definitely upload to those who we have recently downloaded from - use similar logic for PropShare client also
-            best_friend = 0
+            helpers = []
+            empty_helpers = []
             for d in history.downloads[rnd - 1]:
-                if d.to_id == self.id and d.from_id in rids:
-                    if d.blocks > best_friend:
-                        chosen.insert(0, d.from_id)
-                        best_friend = d.blocks
-                    else:
-                        chosen.append(d.from_id)
-                    logging.debug('ID %s was nice by sending %s to %s (me)' % (d.from_id, d.blocks, self.id))
+                if d.to_id == self.id and d.from_id in rids_set:
+                    helpers.append(d)
 
+            # sort by highest value providers in preceding round
+            helpers.sort(key=lambda i: i.blocks)
+
+            helper_ids = list(map(lambda k: k.from_id, helpers))
+
+            # lazy_nodes = list(filter(lambda x: x not in tmp, tmp))
+            # if peers provided 0 value at beginning, append them
+
+            if len(helper_ids) < CUTOFF:
+                lazy_nodes = []
+                for lazy_req in requests:
+                    if lazy_req.requester_id not in helper_ids:
+                        lazy_nodes.append(lazy_req)
+                amount_to_add = min(CUTOFF - len(helper_ids), len(lazy_nodes))
+                for x in range(amount_to_add):
+                    empty_helpers.append(lazy_nodes[x])
+
+            empty_ids = list(map(lambda l: l.requester_id, empty_helpers))
+            # set complements
+            chosen_list_ids = helper_ids + empty_ids
+            chosen_set_ids = set(chosen_list_ids)
+            not_chosen_ids = rids_set - chosen_set_ids
+
+            # todo: kick them out after 3 rounds if not helping
             # optimistic unchoking
-            if rnd % 3 == 0:
-                request = random.choice(requests)
-                chosen.insert(0, request.requester_id)
+            if rnd % 3 == 0 and len(not_chosen_ids) != 0:
+                request_id = random.choice(list(not_chosen_ids))
+                res = chosen_list_ids[:CUTOFF - 1] + [request_id]
+                self.dummy_state['unchoked_id'] = request_id
+            else:
+                try:
+                    res = chosen_list_ids[:CUTOFF - 1] + [self.dummy_state['unchoked_id']]
+                except:
+                    res = chosen_list_ids[:CUTOFF]
                 # todo: ? add something to internal state to remember who we
                 # optimisticly unchoked so we can stop uploading to them after 3 rounds?
                 logging.debug("Still here: uploading to a random peer")
 
+
             # Evenly "split" my upload bandwidth among the one chosen requester
             # only call this when chosen isn't empty?
-            if len(chosen) != 0:
-                logging.debug('%s chosen ones!' % (len(chosen)))
-                bws = even_split(self.up_bw, len(chosen))
+            if len(res) != 0:
+                bws = even_split(self.up_bw, len(res))
             else:
                 return {}
 
@@ -151,8 +176,10 @@ class akjcstd(Peer):
         #todo: decide how many requests to actually fill
             #(i.e. how many slots each peer should have - maybe some function of self.up_bw)
 
+
+
         # create actual uploads out of the list of peer ids and bandwidths
         uploads = [Upload(self.id, peer_id, bw)
-                   for (peer_id, bw) in zip(chosen, bws)]
+                   for (peer_id, bw) in zip(res, bws)]
 
         return uploads
