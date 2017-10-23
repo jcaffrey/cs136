@@ -99,12 +99,26 @@ class Jc24bb:
 
         prev_round = history.round(t-1)
         (slot, min_bid, max_bid) = self.target_slot(t, history, reserve)
+        other_bids = filter(lambda (a_id, b): a_id != self.id, prev_round.bids)
+        clicks = prev_round.clicks
+
 
         # TODO: Fill this in.
+        # going for top, bid true value
+        if slot == 0:
+            return self.value
+        # not expecting to win
+        t_star = other_bids[0][1]
+        if t_star >= self.value:
+            return self.value
 
-        # clicks = prev_round.clicks
+        # otherwise bid according to balanced bidding equation
+        t_star = other_bids[slot][1]
+        vi = self.value
+        pj = .75**slot
+        pj_one = .75**(slot-1)
 
-        bid = 0  # todo: change this
+        bid = ( vi * (pj - pj_one) - (pj * t_star) ) / ( -pj_one )
 
         return bid
 
