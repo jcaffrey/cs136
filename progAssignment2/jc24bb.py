@@ -37,9 +37,9 @@ class Jc24bb:
             return (s, min, max)
 
         info = map(compute, range(len(clicks)))
-        sys.stdout.write("clicks object: %s\n" % clicks)
-
-        sys.stdout.write("slot info: %s\n" % info)
+        # sys.stdout.write("clicks object: %s\n" % clicks)
+        #
+        # sys.stdout.write("slot info: %s\n" % info)
         return info
 
 
@@ -70,7 +70,7 @@ class Jc24bb:
             utility = pos_effect_j * (self.value - cost)
             utilities.append(utility)
 
-        sys.stdout.write("utilities info: %s\n" % utilities)
+        # sys.stdout.write("utilities info: %s\n" % utilities)
 
         return utilities
 
@@ -102,8 +102,6 @@ class Jc24bb:
         other_bids = filter(lambda (a_id, b): a_id != self.id, prev_round.bids)
         clicks = prev_round.clicks
 
-
-        # TODO: Fill this in.
         # going for top, bid true value
         if slot == 0:
             return self.value
@@ -115,8 +113,10 @@ class Jc24bb:
         # otherwise bid according to balanced bidding equation
         t_star = other_bids[slot][1]
         vi = self.value
-        pj = .75**slot
-        pj_one = .75**(slot-1)
+        # pj = .75**slot
+        # pj_one = .75**(slot-1)
+        pj = clicks[slot]
+        pj_one = clicks[slot - 1]
 
         bid = ( vi * (pj - pj_one) - (pj * t_star) ) / ( -pj_one )
 

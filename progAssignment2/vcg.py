@@ -27,7 +27,7 @@ class VCG:
         """
 
         # The allocation is the same as GSP, so we filled that in for you...
-        
+
         valid = lambda (a, bid): bid >= reserve
         valid_bids = filter(valid, bids)
 
@@ -41,16 +41,41 @@ class VCG:
         allocated_bids = valid_bids[:num_slots]
         if len(allocated_bids) == 0:
             return ([], [])
-        
+
         (allocation, just_bids) = zip(*allocated_bids)
 
-        # TODO: You just have to implement this function
+        # TODO: question: should we be using bids rather than valid_bids? probably!
         def total_payment(k):
             """
             Total payment for a bidder in slot k.
             """
             c = slot_clicks
             n = len(allocation)
+
+            # print 'paybids' + str(payBids)
+            #  TODO: is it possible daily spend to be less than utility???
+            # print 'just_bids %s\n' + str(just_bids)
+
+            # base case is the last bidder allocated..
+            if n == k:
+                try:
+                    bi_one = valid_bids[k + 1][1]
+                except:
+                    # print 'in base except'
+                    bi_one = valid_bids[len(valid_bids) - 1][1]
+                # print 'special case' + str(bi_one)
+                return max(bi_one, reserve)
+            else:
+                pi = .75 ** k
+                pi_one = .75 ** (k + 1)
+                try:
+                    bi_one = valid_bids[k + 1][1]
+                except:
+                    # print 'other other other other except'
+                    bi_one = valid_bids[len(valid_bids) - 1][1]
+                # print 'k + 1 case' + str(bi_one)
+
+                return (pi - pi_one) * bi_one + total_payment(k + 1)
 
             # TODO: Compute the payment and return it.
 
@@ -60,7 +85,7 @@ class VCG:
 
         per_click_payments = norm(
             [total_payment(k) for k in range(len(allocation))])
-        
+
         return (list(allocation), per_click_payments)
 
     @staticmethod
