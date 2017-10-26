@@ -113,10 +113,10 @@ class Jc24bb:
         # otherwise bid according to balanced bidding equation
         t_star = other_bids[slot][1]
         vi = self.value
-        # pj = .75**slot
-        # pj_one = .75**(slot-1)
-        pj = clicks[slot]
-        pj_one = clicks[slot - 1]
+
+        total_clicks = float(sum(clicks))
+        pj = float(clicks[slot]) / total_clicks
+        pj_one = float(clicks[slot - 1]) / total_clicks
 
         bid = ( vi * (pj - pj_one) - (pj * t_star) ) / ( -pj_one )
 

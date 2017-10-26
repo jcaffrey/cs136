@@ -13,6 +13,7 @@ from vcg import VCG
 # if we want per-click payments, need to normalize by click_{i}...
 
 def test_mechanism():
+    print 'got here'
     num_slots = 4
     slot_clicks = [4,3,2,1]
     bids = zip(range(1,6), [10, 12, 18, 14, 20])
@@ -22,23 +23,30 @@ def test_mechanism():
     def norm(totals):
         """Normalize total payments by the clicks in each slot"""
         return map(lambda (x,y): x/y, zip(totals, slot_clicks))
-    
+
     # Allocs same as GSP, but payments are different
     reserve = 0
     (alloc, payments) = VCG.compute(slot_clicks, reserve, bids)
+    print 'payments ' + str(payments)
     assert alloc == [5,3,4,2]
     assert payments == norm([54, 36, 22, 10])
 
+    print 'PASSED 1 TEST, RES 0'
+
     reserve = 11
     (alloc, payments) = VCG.compute(slot_clicks, reserve, bids)
+    print 'payments ' + str(payments)
     assert alloc == [5,3,4,2]
-    assert payments == norm([55, 37, 23, 11])
+    assert payments == norm([55, 37, 23, 11])   # off by literally one here..why??
+
+    print 'PASSED ANOTHER TEST, RES 11'
+
 
     reserve = 14
     (alloc, payments) = VCG.compute(slot_clicks, reserve, bids)
     assert alloc == [5,3,4]
     # values, clicks: (20, 4); (18, 3); (14, 2); "(14, 1)"; "(14,0)"
-    # payments: [18+14+14+14 = 60, 14+14+14 = 42, 14, "14'] = 
+    # payments: [18+14+14+14 = 60, 14+14+14 = 42, 14, "14'] =
 
     assert payments == norm([60, 42, 28])
 
@@ -86,3 +94,5 @@ def test_bid_ranges():
     assert bid_range(0, reserve) == (22, None)
     assert bid_range(1, reserve) == (22, 22)
     assert bid_range(2, reserve) == (22, 22)
+
+test_mechanism()

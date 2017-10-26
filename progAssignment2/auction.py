@@ -373,7 +373,7 @@ def main(args):
         logging.info("-" * 40)
         logging.info("\n")
     avg_daily_util = tot_daily_util / n
-    logging.info("AVERAGE DAILY REVENUE $%.2f \n"%avg_daily_util)
+    logging.info("AVERAGE DAILY UTILITY $%.2f \n"%avg_daily_util)
     m = mean(total_revenues)
     std = stddev(total_revenues)
     logging.warning("Average daily revenue (stddev): $%.2f ($%.2f)" % (0.01 * m, 0.01*std))

@@ -44,47 +44,79 @@ class VCG:
 
         (allocation, just_bids) = zip(*allocated_bids)
 
+        # def total_payment(k):
+        #     c = slot_clicks
+        #     n = len(allocation)
+        #     if n == k:
+        #         pi = c[k-1]
+        #         bi_one = valid_bids[k][1]
+        #         return pi * max(reserve, bi_one)
+        #     elif k <= n - 2:
+        #         pi = c[k]
+        #         pi_one = c[k+1]
+        #         bi_one = valid_bids[k+1][1]
+        #
+        #         effect = (pi - pi_one) * bi_one
+        #         print 'effect '  + str(effect) + ' at k ' + str(k)
+        #
+        #         return effect + total_payment(k + 1)
+        #     else:
+        #         return reserve
+
+
         # TODO: question: should we be using bids rather than valid_bids? probably!
+        # careful to skip over where i wasn
+        # just use slot_clicks for pos effect
+
+
         def total_payment(k):
-            """
-            Total payment for a bidder in slot k.
-            """
             c = slot_clicks
             n = len(allocation)
 
-            # print 'paybids' + str(payBids)
-            #  TODO: is it possible daily spend to be less than utility???
-            # print 'just_bids %s\n' + str(just_bids)
-
-            # base case is the last bidder allocated..
+            # be careful with off by one errors
             if n == k:
+                pi = slot_clicks[k-1]
                 try:
-                    bi_one = valid_bids[k + 1][1]
+                    bi_one = valid_bids[k][1]
                 except:
-                    # print 'in base except'
-                    bi_one = valid_bids[len(valid_bids) - 1][1]
-                # print 'special case' + str(bi_one)
-                return max(bi_one, reserve)
+                    bi_one = valid_bids[k-1][1]
+
+                # print 'final value '  + str(pi * max(reserve, bi_one)) + ' at k ' + str(k)
+
+                return pi * max(reserve, bi_one)
             else:
-                pi = .75 ** k
-                pi_one = .75 ** (k + 1)
+                if k == 0:
+                    pi = slot_clicks[k]
+                    pi_one = slot_clicks[k+1]
+                else:
+                    pi = slot_clicks[k-1]
+                    pi_one = slot_clicks[k]
+
                 try:
-                    bi_one = valid_bids[k + 1][1]
+                    bi_one = valid_bids[k][1]
                 except:
-                    # print 'other other other other except'
-                    bi_one = valid_bids[len(valid_bids) - 1][1]
-                # print 'k + 1 case' + str(bi_one)
+                    bi_one = valid_bids[k-1][1]
 
-                return (pi - pi_one) * bi_one + total_payment(k + 1)
+                pos_diff = pi - pi_one
+                effect = pos_diff * bi_one
+                # print 'pos_diff ' + str(pos_diff) + ' effect '  + str(effect) + ' at k ' + str(k)
 
-            # TODO: Compute the payment and return it.
+                return effect + total_payment(k + 1)
+
 
         def norm(totals):
             """Normalize total payments by the clicks in each slot"""
             return map(lambda (x,y): x/y, zip(totals, slot_clicks))
 
-        per_click_payments = norm(
-            [total_payment(k) for k in range(len(allocation))])
+        # per_click_payments = norm(
+        #     [total_payment(k) for k in range(len(allocation))])
+        pcp = []
+        # print 'valid_bids ' + str(valid_bids)
+        for k in range(1,len(allocation)+1):
+            tpk = total_payment(k)
+            # print 'k value ' + str(k) + 'gives total payment ' + str(tpk)
+            pcp.append(tpk)
+        per_click_payments = norm(pcp)
 
         return (list(allocation), per_click_payments)
 

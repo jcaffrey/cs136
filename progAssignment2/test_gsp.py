@@ -7,6 +7,7 @@
 from gsp import GSP
 
 def test_mechanism():
+    print 'got here'
     num_slots = 4
     slot_clicks = [1] * 4   # don't actually matter for gsp
     bids = zip(range(1,6), [10, 12, 18, 14, 20])
@@ -71,3 +72,5 @@ def test_bid_ranges():
     assert bid_range(0, reserve) == (22, None)
     assert bid_range(1, reserve) == (22, 22)
     assert bid_range(2, reserve) == (22, 22)
+
+test_mechanism()
