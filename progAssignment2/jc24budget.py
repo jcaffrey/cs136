@@ -4,7 +4,6 @@ import sys
 
 from gsp import GSP
 from util import argmax_index
-# calculate how much money per round you have. (val - price)/price. decide threshold, adaptively update throughout auction
 
 
 class Jc24Budget:
@@ -51,9 +50,21 @@ class Jc24Budget:
 
         returns a list of utilities per slot.
         """
-        # TODO: Fill this in
-        utilities = []   # Change this
+        utilities = []
+        prev_round = history.round(t-1)
+        other_bids = filter(lambda (a_id, b): a_id != self.id, prev_round.bids)
+        clicks = prev_round.clicks
 
+        num_slots = len(clicks)
+        # todo: num bidders 1 bigger than num slots? --> add dumby of reserve price at the end
+        if len(other_bids) < len(clicks) + 1:
+            other_bids = other_bids + [(-1,reserve)] * (len(clicks)+1-len(other_bids))
+        # print 'other_bids ' + str(other_bids) + ' len(other_bids) ' + str(len(other_bids)) + ' vs len(clicks) ' + str(len(clicks))
+        for j in range(num_slots):
+            pos_effect_j = clicks[j]
+            cost = other_bids[j][1]
+            utility = pos_effect_j * (self.value - cost)
+            utilities.append(utility)
 
         return utilities
 
@@ -70,21 +81,62 @@ class Jc24Budget:
         return info[i]
 
     def bid(self, t, history, reserve):
-        # The Balanced bidding strategy (BB) is the strategy for a player j that, given
-        # bids b_{-j},
-        # - targets the slot s*_j which maximizes his utility, that is,
-        # s*_j = argmax_s {clicks_s (v_j - t_s(j))}.
-        # - chooses his bid b' for the next round so as to
-        # satisfy the following equation:
-        # clicks_{s*_j} (v_j - t_{s*_j}(j)) = clicks_{s*_j-1}(v_j - b')
-        # (p_x is the price/click in slot x)
-        # If s*_j is the top slot, bid the value v_j
+        NUMROUNDS = 48
+        # calculate how much money per round you have. (val - price)/price. decide threshold, adaptively update throughout auction
+        # ideally you'd want to check other slots other than the ideal slot bc maybe ratio would be better
 
         prev_round = history.round(t-1)
         (slot, min_bid, max_bid) = self.target_slot(t, history, reserve)
+        other_bids = filter(lambda (a_id, b): a_id != self.id, prev_round.bids)
+        clicks = prev_round.clicks
 
-        # TODO: Fill this in.
-        bid = 0  # change this
+
+        cur_round = history.num_rounds()
+        rounds_left = NUMROUNDS - cur_round
+
+        money_spent = history.agents_spent[self.id] / cur_round
+        print 'money_spent ' + str(money_spent)
+        if (self.budget - money_spent) < 0:
+            budget_per_round = self.value
+        else:
+            budget_per_round = float((self.budget - money_spent)) / float(rounds_left)  # why is this negative sometimes?
+
+        vi = self.value
+
+        # if the min bid less than your value and budget_per_round
+        if min_bid < vi and min_bid < budget_per_round:
+            return min_bid
+
+        # if you have the money..bid your true value..
+        if budget_per_round > vi:
+            return min(vi, min_bid)
+
+        threshold = min_bid
+        if min_bid != 0:
+            threshold = float(self.value - min_bid) / float(min_bid)
+        else:
+            return 1
+        print('min_bid %d. value %d. threshold %d. budget_per_round %d' % (min_bid, self.value, threshold, budget_per_round))
+
+
+        # going for top, bid true value
+        if slot == 0:
+         return vi
+        # not expecting to win
+        t_star = min_bid
+        if t_star >= vi:
+         return vi
+
+
+        # otherwise bid according to balanced bidding equation
+        t_star = min_bid
+
+        pj = clicks[slot]
+        pj_one = clicks[slot - 1]
+
+        # bid for slot 1: 8 - 2/3 * (8 - 5) = 8 - 2/3(3) = 6
+        effect =  (pj * float((vi - t_star)))/(float(pj_one))
+        bid = vi - effect
 
         return bid
 
