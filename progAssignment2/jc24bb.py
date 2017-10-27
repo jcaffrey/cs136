@@ -110,7 +110,6 @@ class Jc24bb:
         pj = clicks[slot]
         pj_one = clicks[slot - 1]
 
-        # bid for slot 1: 8 - 2/3 * (8 - 5) = 8 - 2/3(3) = 6
         effect =  (pj * float((vi - t_star)))/(float(pj_one))
         bid = vi - effect
 

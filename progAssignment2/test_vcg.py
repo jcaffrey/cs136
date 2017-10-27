@@ -13,7 +13,6 @@ from vcg import VCG
 # if we want per-click payments, need to normalize by click_{i}...
 
 def test_mechanism():
-    print 'got here'
     num_slots = 4
     slot_clicks = [4,3,2,1]
     bids = zip(range(1,6), [10, 12, 18, 14, 20])
