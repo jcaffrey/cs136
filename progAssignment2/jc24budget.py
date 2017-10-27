@@ -94,14 +94,23 @@ class Jc24Budget:
         cur_round = history.num_rounds()
         rounds_left = NUMROUNDS - cur_round
 
-        money_spent = history.agents_spent[self.id] / cur_round
-        print 'money_spent ' + str(money_spent)
-        if (self.budget - money_spent) < 0:
-            budget_per_round = self.value
-        else:
-            budget_per_round = float((self.budget - money_spent)) / float(rounds_left)  # why is this negative sometimes?
+        money_spent = float(history.agents_spent[self.id]) / float(cur_round)
+        # if (self.budget - money_spent) < 0:
+        #     print '####WEIRD money_spent was ' + str(money_spent) + ' in round ' + str(cur_round)
+        #     budget_per_round = self.value
+        # else:
+        print 'money left ' + str(float((self.budget - money_spent)))
+        budget_per_round = float((self.budget - money_spent)) / float(rounds_left)  # why is this negative sometimes?
 
         vi = self.value
+
+        threshold = min_bid
+        if min_bid != 0:
+            threshold = float(self.value - min_bid) / float(min_bid)
+        else:
+            return 1
+        # print('min_bid %d. value %d. threshold %d. budget_per_round %d' % (min_bid, self.value, threshold, budget_per_round))
+
 
         # if the min bid less than your value and budget_per_round
         if min_bid < vi and min_bid < budget_per_round:
@@ -111,12 +120,6 @@ class Jc24Budget:
         if budget_per_round > vi:
             return min(vi, min_bid)
 
-        threshold = min_bid
-        if min_bid != 0:
-            threshold = float(self.value - min_bid) / float(min_bid)
-        else:
-            return 1
-        print('min_bid %d. value %d. threshold %d. budget_per_round %d' % (min_bid, self.value, threshold, budget_per_round))
 
 
         # going for top, bid true value
