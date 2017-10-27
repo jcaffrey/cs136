@@ -27,19 +27,19 @@ def test_mechanism():
     # Allocs same as GSP, but payments are different
     reserve = 0
     (alloc, payments) = VCG.compute(slot_clicks, reserve, bids)
-    print 'payments ' + str(payments)
+    # print 'payments ' + str(payments)
     assert alloc == [5,3,4,2]
     assert payments == norm([54, 36, 22, 10])
 
-    print 'PASSED 1 TEST, RES 0'
+    # print 'PASSED 1 TEST, RES 0'
 
     reserve = 11
     (alloc, payments) = VCG.compute(slot_clicks, reserve, bids)
-    print 'payments ' + str(payments)
+    # print 'payments ' + str(payments)
     assert alloc == [5,3,4,2]
     assert payments == norm([55, 37, 23, 11])   # off by literally one here..why??
 
-    print 'PASSED ANOTHER TEST, RES 11'
+    # print 'PASSED ANOTHER TEST, RES 11'
 
 
     reserve = 14

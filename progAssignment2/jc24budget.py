@@ -4,6 +4,8 @@ import sys
 
 from gsp import GSP
 from util import argmax_index
+# calculate how much money per round you have. (val - price)/price. decide threshold, adaptively update throughout auction
+
 
 class Jc24Budget:
     """Balanced bidding agent"""

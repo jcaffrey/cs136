@@ -37,9 +37,7 @@ class Jc24bb:
             return (s, min, max)
 
         info = map(compute, range(len(clicks)))
-        # sys.stdout.write("clicks object: %s\n" % clicks)
-        #
-        # sys.stdout.write("slot info: %s\n" % info)
+
         return info
 
 
@@ -51,26 +49,21 @@ class Jc24bb:
 
         returns a list of utilities per slot.
         """
-        # utility = pos_effect_j (self.value - cost)
-            # pos_effect_j is .75**j
-            # cost is gsp so it's j+1'st bid from the previous round
-
-        # ~~~~~~~new code~~~~~~~~~~
         utilities = []
         prev_round = history.round(t-1)
         other_bids = filter(lambda (a_id, b): a_id != self.id, prev_round.bids)
         clicks = prev_round.clicks
 
         num_slots = len(clicks)
-        # sys.stdout.write("other bids info: %s\n" % other_bids)
-        # todo: check the indices here more diligently
+        # todo: num bidders 1 bigger than num slots? --> add dumby of reserve price at the end
+        if len(other_bids) < len(clicks) + 1:
+            other_bids = other_bids + [(-1,reserve)] * (len(clicks)+1-len(other_bids))
+        # print 'other_bids ' + str(other_bids) + ' len(other_bids) ' + str(len(other_bids)) + ' vs len(clicks) ' + str(len(clicks))
         for j in range(num_slots):
-            pos_effect_j = .75 ** j  # j-1???
-            cost = other_bids[j][1]  # j-1???
+            pos_effect_j = clicks[j]
+            cost = other_bids[j][1]
             utility = pos_effect_j * (self.value - cost)
             utilities.append(utility)
-
-        # sys.stdout.write("utilities info: %s\n" % utilities)
 
         return utilities
 
@@ -96,7 +89,6 @@ class Jc24bb:
         # clicks_{s*_j} (v_j - t_{s*_j}(j)) = clicks_{s*_j-1}(v_j - b')
         # (p_x is the price/click in slot x)
         # If s*_j is the top slot, bid the value v_j
-
         prev_round = history.round(t-1)
         (slot, min_bid, max_bid) = self.target_slot(t, history, reserve)
         other_bids = filter(lambda (a_id, b): a_id != self.id, prev_round.bids)
@@ -106,19 +98,21 @@ class Jc24bb:
         if slot == 0:
             return self.value
         # not expecting to win
-        t_star = other_bids[0][1]
+        t_star = min_bid
         if t_star >= self.value:
             return self.value
 
+
         # otherwise bid according to balanced bidding equation
-        t_star = other_bids[slot][1]
+        t_star = min_bid
         vi = self.value
 
-        total_clicks = float(sum(clicks))
-        pj = float(clicks[slot]) / total_clicks
-        pj_one = float(clicks[slot - 1]) / total_clicks
+        pj = clicks[slot]
+        pj_one = clicks[slot - 1]
 
-        bid = ( vi * (pj - pj_one) - (pj * t_star) ) / ( -pj_one )
+        # bid for slot 1: 8 - 2/3 * (8 - 5) = 8 - 2/3(3) = 6
+        effect =  (pj * float((vi - t_star)))/(float(pj_one))
+        bid = vi - effect
 
         return bid
 

@@ -69,37 +69,38 @@ class VCG:
         # just use slot_clicks for pos effect
 
 
+        # just_bids = [0] + list(just_bids)
+        # c = [0] + slot_clicks
+        # def total_payment(k):
+        #     payment = 0
+        #     for i in range(k, len(just_bids)-1):
+        #         payment += ( c[k] - c[k+1] ) * just_bids[k+1]
+        #     return payment
+
+
+
+
+
+        if len(valid_bids) < len(allocation)+1:
+            valid_bids = valid_bids + [(-1,reserve)] * (len(allocation)+1-len(valid_bids))
         def total_payment(k):
             c = slot_clicks
             n = len(allocation)
 
             # be careful with off by one errors
-            if n == k:
-                pi = slot_clicks[k-1]
-                try:
-                    bi_one = valid_bids[k][1]
-                except:
-                    bi_one = valid_bids[k-1][1]
+            if (n-1) == k:
+                pi = slot_clicks[k]
 
-                # print 'final value '  + str(pi * max(reserve, bi_one)) + ' at k ' + str(k)
-
+                bi_one = valid_bids[k+1][1]
                 return pi * max(reserve, bi_one)
             else:
-                if k == 0:
-                    pi = slot_clicks[k]
-                    pi_one = slot_clicks[k+1]
-                else:
-                    pi = slot_clicks[k-1]
-                    pi_one = slot_clicks[k]
+                pi = slot_clicks[k]
+                pi_one = slot_clicks[k+1]
 
-                try:
-                    bi_one = valid_bids[k][1]
-                except:
-                    bi_one = valid_bids[k-1][1]
+                bi_one = valid_bids[k+1][1]
 
                 pos_diff = pi - pi_one
                 effect = pos_diff * bi_one
-                # print 'pos_diff ' + str(pos_diff) + ' effect '  + str(effect) + ' at k ' + str(k)
 
                 return effect + total_payment(k + 1)
 
@@ -108,15 +109,15 @@ class VCG:
             """Normalize total payments by the clicks in each slot"""
             return map(lambda (x,y): x/y, zip(totals, slot_clicks))
 
-        # per_click_payments = norm(
-        #     [total_payment(k) for k in range(len(allocation))])
-        pcp = []
-        # print 'valid_bids ' + str(valid_bids)
-        for k in range(1,len(allocation)+1):
-            tpk = total_payment(k)
-            # print 'k value ' + str(k) + 'gives total payment ' + str(tpk)
-            pcp.append(tpk)
-        per_click_payments = norm(pcp)
+        per_click_payments = norm(
+            [total_payment(k) for k in range(len(allocation))])
+        # pcp = []
+        # # print 'valid_bids ' + str(valid_bids)
+        # for k in range(len(allocation)):
+        #     tpk = total_payment(k)
+        #     print 'k value ' + str(k) + 'gives total payment ' + str(tpk)
+        #     pcp.append(tpk)
+        # per_click_payments = norm(pcp)
 
         return (list(allocation), per_click_payments)
 
