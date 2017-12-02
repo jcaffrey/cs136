@@ -1,0 +1,280 @@
+\documentclass[11pt]{article}
+\usepackage{hyperref}
+\usepackage{enumerate,fullpage,amsmath,amsthm,multirow,array,graphicx}
+\usepackage{amsfonts}
+\usepackage{comment}
+\usepackage{cleveref}
+\newcommand{\points}[1]{\textbf{[#1 Points]}}
+\newcommand{\extracredit}{\mbox{\textbf{[Extra Credit]}}}
+\newtheorem{definition}{Definition}
+\usepackage{tikz}
+\newcommand{\Pm}[1]{\mathbb{P}\left[#1 \right]}
+
+
+
+\usepackage{color}
+\DeclareMathOperator*{\argmax}{\arg\!\max}
+
+\begin{document}
+
+\title{CS 136 Assignment 5\\
+Revenue-Optimal Auctions}
+\author{David C. Parkes  \\School of Engineering and Applied Sciences, Harvard University\\Out Friday October 6,  2017\\
+Due {\bf 5pm} sharp: {\bf Fri. Oct.~13th, 2017}\\
+{\bf Latest possible submission: 5p, Sat Oct~14th. (solns distr.~then)}\\
+Submissions to \texttt{Canvas}}
+\date{}
+
+\maketitle
+
+\noindent {\bf Total points: 44.}
+This is a single-person assignment.
+Points will be awarded for clarity, correctness and completeness of
+answers, and we encourage typed submissions. You are free to discuss
+the problem set with other students but you must not share your
+answers.  Extra credit will only be considered as a factor in deciding
+the letter grade for the course at the end of the term.
+
+\begin{enumerate}[1.]
+	\item \points{14}
+Prior-free auctions (digital goods)
+
+\begin{enumerate}[(a)]
+\item \points{2} Construct an example of bids in the DOP auction for
+  which a different price is offered to two different bidders.  Why
+  might this be undesirable?
+
+  \textbf{Solution:}
+
+  Here some set of bids: $\{ 13,8,6,5,1,1\}$ would offer a different price to the first and second bidders since we see that $p_{13}=5$ but $p_8=13$. Here, we see this is undesirable because the second highest bidder is not allocated since $8 < 13$. What is worse is that none of the other bidders are allocated either and the revenue ends up being just 5 even though surely it could have been higher, since a SPBS would have gotten revenue of 8.
+
+\item \points{2} Show that the SPSB auction obtains an approximation
+  factor of 2 to revenue target $R_{\mathrm{opt}}^{(2)}(v)$ when there
+  are two bidders.
+
+  \textbf{Solution:}
+
+  In an SPSB, we see that the revenue optimal from selling to at least 2 bidders would collect the value of the second highest bid from both bidders.  In SPSB we see that we will collect the value of the second bid from one bidder (whoever bid the highest).  It follows that we will have a 2-approximation in this setting.  $\frac{R_{\mathrm{opt}}^{(2)}(v)}{E[R_{\text{SPSB}}(v)]} = \frac{b_2 + b_2}{b_2} = 2 \leq 2$.
+
+
+
+\item \points{4} Consider a setting with two bidders ($v_1\in [0,1]$),
+  two goods, and deterministic, individually-rational, strategy-proof
+  auctions. Prove that for any auction $A$, there is a value profile
+  $(v_1,v_2)$ for which some other auction $B$ has strictly more
+  revenue. [Hint: reasoning about agent-independent prices (
+  Thm.~7.7) may be useful.]
+
+  \textbf{Solution: TODO}
+
+  notes: agent-independent implies that the price faced by an agent does not depend on the value of that agent
+
+\item \points{6} Prove that the profit extractor is strategy-proof.
+  [Hint: monotonicity and critical value]
+
+  \textbf{Solution: beef up the critical value argument????}
+
+  Intuitively, we get the sense that the profit extractor is a somewhat greedy algorithm so we immediately feel that it should be monotone. We can formalize this by seeing that the profit extractor ranks bids in decreasing order and selects the largest k willing to pay $\frac{R}{k}$.  By this definition, we see that an agent bidding higher value can only possibly result in a higher probability of being selected.
+
+  We see also that the profit extractor's payment rule follows the definition of critical value.  Since the profit extractor charges the amount which is responsible for deciding who is allocated, we see that this amount is also the critical value an agent must bid to still be selected.
+
+  Given that we have monotonicity and critical value payment, we see that the profit extractor will enforce truthful bidding and strategy-proofness.
+
+
+\end{enumerate}
+
+
+\item \points{14}  Random sampling auctions
+
+  The {\em random optimal price (ROP) auction} splits the bids into
+  two sets $B_1$ and $B_2$. It then uses the DOP approach--- bidders
+  in $B_1$ each face the optimal price based on bids in $B_2$, and
+  bidders in $B_2$ each face the optimal price based on the bids in
+  $B_1$ (the optimal price is defined as per the definition in DOP).
+  In the case that there are no bids in $B_1$ then the item is not
+  sold to bids in $B_2$ (and similarly when there are no bids in
+  $B_2$).  \if 0
+
+\begin{definition}[Random optimal price (ROP) auction]
+Place each bid uniformly at random into one of two sets, $B_1$
+and $B_2$. For each bidder in $B_1$, make a take-it-or-leave-it
+offer at price $r^\ast_1=\arg\max_r r(1-F_{B_2})$ (or $\infty$
+if no bids are in $B_2$.). For each bidder
+in $B_2$, make a take-it-or-leave-it offer at price $r^\ast_2=\arg\max_r r(1-F_{B_1})$ (or $\infty$ if no bids are in $B_1$).
+\end{definition}
+
+
+The price $r^\ast_1$ is equivalent to the bid price of the bidder
+in $B_2$ that would be selected in solving $\max_i i\cdot b^{(i)}$
+where $b^{(i)}$ is the $i$th highest bid in $B_2$. Similarly
+for $r^\ast_2$.
+\fi
+%
+%
+\begin{enumerate}[(a)]
+\item \points{4} Consider an instance with two bidders, one with value
+  1 and one with value 2. What is the revenue target
+  $R_{\mathrm{opt}}^{(2)}(v)$? Show that $R_{\mathrm{opt}}^{(2)}(v)/
+\mathbf{E}[R_{\mathrm{ROP}}(v)]=4$ on this instance.
+[Hint: to calculate the expected revenue of ROP, proceed
+by case analysis on the different outcomes of the
+  random split.]
+
+  \textbf{Solution:}
+
+  Here, we see that in ROP with 2 bidders there are 4 potential cases.  Either both bids fall in B1 or they both fall in B2 or one of each bid falls in either B1 or B2, and vice versa.  In the case where they both fall in the same bin, the total revenue is 0 but in the other two cases it is 1.  Thus, we see that the expected total revenue of ROP in this case is $\frac{1}{4} (0 + 0+1+1) = \frac{1}{2}$.
+
+  Since we see that $R_{\mathrm{opt}}^{(2)}(v) = 1 + 1 = 2$ we get the approximation result we want:
+
+  $R_{\mathrm{opt}}^{(2)}(v)/
+\mathbf{E}[R_{\mathrm{ROP}}(v)] = \frac{2}{\frac{1}{2}} = 4 \leq 4$
+
+
+\item \points{4} What is the approximation factor achieved by the RSPE
+  auction and the DOP auction on the same input?
+
+  \textbf{Solution:}
+
+  Here, we see the expected total revenue from DOP is 1 (the revenue gained from selling to bidder 2 at a price of 1 and not allocating to the bidder with value 1).
+
+  This gives an approximation factor of 2 in this case where: $R_{\mathrm{opt}}^{(2)}(v)/
+\mathbf{E}[R_{\mathrm{DOP}}(v)] = \frac{2}{1} = 2 \leq 2$
+
+For RSPE, we see that there are four cases, two of which yield no revenue and 2 of which yield revenue of 1. Thus $\mathbf{E}[R_{\mathrm{RSPE}}(v)] = \frac{1}{4} 2 = \frac{1}{2}$.  Thus, we see that we get a worse approximation factor for RSPE than DOP since we have: $R_{\mathrm{opt}}^{(2)}(v)/
+\mathbf{E}[R_{\mathrm{RSPE}}(v)] = \frac{2}{\frac{1}{2}} = 4 \leq 4$
+
+
+
+%
+\item \points{6} Write a simple program to simulate the ROP and RSPE
+  auctions on the 10@10 and 90@1 example (see Example 9.7).  How does
+  the average revenue of the ROP and RSPE auctions compare to the DOP
+  auction in this example? Give some intuition for what you find.
+
+\textbf{Solution:}
+Here, we see that RSPE on average generates more revenue (seeming to generate 100 revenue with very high probability). Intuitively this makes sense since RSPE will tend to charge 10 to all bidders with value 10 with very high probability because of the way that R1 and R2 is defined, whereas the ROP will sometimes achieve that but more often fluctuate between 87 and 89 revenue. Of course, this is much better than DOP which only generates revenue of 10 on this example.
+
+\end{enumerate}
+
+\item[3.] \points{19} Virtual values
+
+\begin{enumerate}[(a)]
+
+\item \points{3}  Give an example of a piecewise-constant PDF
+for a distribution on values that is not regular.
+
+\textbf{Solution:}
+
+\includegraphics{images/1pdf.png}
+
+
+%
+
+\item \points{4} Calculate the {\em expected virtual value} in the
+  SPSB auction with reserve $r=0.5$, and two bidders with values IID
+  $v_i\sim U(0,1)$. Compare with the expected revenue (see Example~9.1).
+What do you notice?
+
+\textbf{Solution:}
+
+Here, we see that the expected revenue is $\frac{1}{3}$ from the example.  We also see that the reserve price means that the bidders will not recieve any value if they bid below .5 so the expected virtual value half the time is 0.  In the other half of the time, it must be the case that at least one of the bidders bid more than .5 and they paid the max of
+the reserve price and the next highest bidder.
+
+Thus we see our interim allocation is .5 and from the expression for virtual value we see that k$E[\text{virtual value}] = \frac{1}{2} \times \phi(v_i)$ where $$\phi(v_i) = v_i - \frac{1-G(v_i)}{g_i} = \frac{2}{3} - \frac{1-\frac{2}{3}}{1} = \frac{1}{3}$$
+
+Thus, we see that the expected revenue is equal to expected virtual value, as is the case in the textbook situation!
+
+
+
+\item \points{2} Confirm that the vthe reserirtual value~(9.4) is correctly
+  defined for this distribution function:
+%
+\begin{align}
+  G(w)&=\left\{
+  \begin{array}{ll}
+    2w & \mbox{,  if $w\leq 1/4$}
+    \\
+    \frac{2}{3}w+\frac{1}{3} &\mbox{o.w.}
+  \end{array}
+  \right.
+\end{align}
+
+%
+
+\item \points{2} What is the expression for the virtual valuation
+  function for a uniform distribution $v_i\sim U(v_\ell,v_h)$? Do you
+  find anything surprising about this expression?
+
+
+\item \points{3} Consider selling to a single bidder, and making a
+  take-it-or-leave-it offer of price $p$.  Recall Thm~9.2 (expected
+  revenue = expected v.v.).  Find the $p$ that maximizes expected v.v.
+  when the bidder value is $v_i\sim U(v_\ell,v_{h})$.
+
+
+%
+\item \points{3} Calculate the optimal price $p$ for uniform
+  distributions on [0,1], [0.5, 1.5], [1,2].  What do you notice that
+  is surprising, and can you provide a simple intuition for why this
+  might make sense?
+
+%
+
+%
+%\item \textbf{(Extra Credit)} xx for symmetric, SPSB+r optimal.
+%The reserve price in an optimal auction is
+%independent of the number of bidders. Can you give any intuition
+%for why this makes sense?
+
+\if 0
+\item \points{xx} The expected revenue from selling an item at price $p$ to a
+  bidder with value distribution $G$ is $p(1-G(p))$. Use first-order
+  optimality conditions to confirm for value $v_1\sim U(0,v_{\max})$
+  that the optimal price $p^\ast=v_{\max}/2$.  Also determine the
+  optimal price for uniform distributions on $[0,1]$, $[0.5, 1.5]$,
+  $[1,2]$ and $[100,110]$.
+%
+\fi
+
+\item \points{2} What is the expected virtual value for an allocation
+  rule that always allocates to a bidder with value $v_i\sim
+  U(v_\ell,v_{h})$? Give some intuition for this.
+
+
+%example of a piecewise constant probability density
+%function that is not regular.
+%
+
+\item \textbf{(Extra Credit)}  Referring to Theorem 9.2:
+%
+\begin{enumerate}[(i)]
+\item Changing the order of summation:
+Prove that $\sum_{i=1}^k\sum_{j=i}^kg(j)h(i)=\sum_{i=1}^k\sum_{j=1}^i g(i)h(j)$,
+for any $k\geq 1$ and any two functions $g$ and $h$.
+%
+\item Write down (without proof) the analogous identity for
+$$\int_{w=0}^\infty \int_{z=w}^\infty
+g(z)x^\ast(w)\mathrm{d}z\mathrm{d}w.$$
+%
+%equal to
+%
+%$$\int_{w=0}^\infty  \int_{z=0}^w x^\ast(z)g(w)\mathrm{d}z\mathrm{d}w$$
+%
+Use this to confirm the `changing the order of integration' step in
+ the proof of Theorem 9.2.
+%
+%
+\item Prove a version of Theorem 9.2
+for the case of an auction with a single bidder, and assuming that the
+allocation rule $x(w)=1$ for $w\geq r$ and 0 otherwise.  [Hint: start
+with ${\mathbf E}\left[\phi(w)x(w)\right]=\int_{w=r}^{v_{\max}}
+\phi(w)g(w)\mathrm{d}w$, and show for a sequence of steps that this
+is equal to ${\mathbf E}[t(w)]$ for payment rule $t$.]
+
+
+
+\end{enumerate}
+
+\end{enumerate}
+\end{enumerate}
+\end{document}

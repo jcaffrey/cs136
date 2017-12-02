@@ -26,6 +26,21 @@ class akjcstd(Peer):
         self.dummy_state = dict()
         self.dummy_state["cake"] = "lie"
 
+    def get_piece_presences(self, peers, needed_pieces):
+        piece_count_dict = {}
+        piece_holder_dict = {}
+        for peer in peers:
+            for piece in peer.available_pieces:
+                # increment counts to pieces found
+                if piece in piece_count_dict and piece in needed_pieces:
+                    piece_count_dict[piece] += 1
+                    piece_holder_dict[piece].append(peer.id)
+                # new piece found and in needed pieces
+                elif piece in needed_pieces:
+                    piece_count_dict[piece] = 1
+                    piece_holder_dict[piece] = [peer.id]
+        return (piece_count_dict, piece_holder_dict)
+
     def requests(self, peers, history):
         """
         ** must ask for pieces the peer has **
@@ -57,24 +72,15 @@ class akjcstd(Peer):
         # Symmetry breaking is good...
         random.shuffle(needed_pieces)
 
-        # not sure this helps
-        peers.sort(key=lambda p: p.id)
-        # request all available pieces from all peers!
-        # (up to self.max_requests from each)
-        for peer in peers:
-            av_set = set(peer.available_pieces)
-            isect = av_set.intersection(np_set)
-            n = min(self.max_requests, len(isect))
-            # More symmetry breaking -- ask for random pieces.
-            # This would be the place to try fancier piece-requesting strategies
-            # to avoid getting the same thing from multiple peers at a time.
-            for piece_id in random.sample(isect, n):
-                # aha! The peer has this piece! Request it.
-                # which part of the piece do we need next?
-                # (must get the next-needed blocks in order)
-                start_block = self.pieces[piece_id]
-                r = Request(self.id, peer.id, piece_id, start_block)
-                requests.append(r)
+        # get all peices and corresponding counts
+        (viable_pieces_dict, piece_holder_dict) = self.get_piece_presences(peers, np_set)
+
+        num_of_requests = min(self.max_requests, len(viable_pieces_dict.keys()))
+        while (len(requests) < num_of_requests):
+            rarest_piece_id = min(viable_pieces_dict, key=viable_pieces_dict.get)
+            viable_pieces_dict.pop(rarest_piece_id, None)
+            request = Request(self.id, random.choice(piece_holder_dict[rarest_piece_id]), rarest_piece_id, self.pieces[rarest_piece_id])
+            requests.append(request)
 
         return requests
 
@@ -95,7 +101,6 @@ class akjcstd(Peer):
 
 
         rnd = history.current_round()
-        res = []
         logging.debug("%s again.  It's round %d." % (
             self.id, rnd))
         # One could look at other stuff in the history too here.
@@ -108,6 +113,7 @@ class akjcstd(Peer):
         # get requester ids
         rids_set = set(map(lambda i: i.requester_id, requests))
         chosen_list_ids = []
+        res = []
         logging.debug('RIDS %s' % (rids_set))
 
         if len(requests) == 0:
